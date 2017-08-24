@@ -1,0 +1,822 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Yargy &#8212; Python  documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="yargy">
+<h1>Yargy<a class="headerlink" href="#yargy" title="Permalink to this headline">¶</a></h1>
+<p>Yargy — библиотека для извлечения структурированной информации из
+текстов на русском языке. Правила описываются контекстно-свободными
+грамматиками и словарями ключевых слов. Банк готовых правил для имён,
+дат, адресов, организаций и брендов доступен в репозитории
+<a class="reference external" href="https://github.com/bureaucratic-labs/natasha">Natasha</a>.</p>
+<p>Для работы с морфологией используется
+<a class="reference external" href="http://pymorphy2.readthedocs.io/en/latest/">Pymorphy2</a>. Парсер
+реализует алгоритм <a class="reference external" href="https://en.wikipedia.org/wiki/Earley_parser">Earley
+parser</a>. Библиотека
+написана на чистом Питоне, поддерживает Python 2.7+ / 3.3+ и Pypy.</p>
+<p>Чем Yargy отличается от
+<a class="reference external" href="https://tech.yandex.ru/tomita/">Томита-парсера</a>? Эти инструменты
+решают одну задачу — извлечение информации из текстов на естественном
+языке. Томита-парсер много лет разрабатывался большим количеством людей
+внутри Яндекса, объём кода — десятки тысяч строк на C++. Yargy —
+библиотека созданная сообществом, написанная на Питоне, объём кода —
+несколько тысяч строк. У этих проектов очень много отличий, вот
+основные:</p>
+<ul class="simple">
+<li>У Томита-парсера консольный интерфейс, Yargy — это библиотека на
+Питоне</li>
+<li>В Томита-парсере для описания правил используется свой язык и
+Protobuf-файлы, в Yargy грамматики и словари описываются на Питоне</li>
+<li>Вместе с Yargy в репозитории
+<a class="reference external" href="https://github.com/bureaucratic-labs/natasha">Natasha</a>
+публикуются готовые правила для извлечения имён, дат, адресов и
+других сущностей. Яндекс не раскрывает свои правила для
+Томита-парсера.</li>
+<li>Томита-парсер — не очень быстрый, Yargy — вообще не очень быстрый,
+потому что реализован на Питоне, а не на C++ и, наверняка, не так
+хорошо оптимизирован, как Томита-парсер.</li>
+</ul>
+<div class="section" id="examples">
+<span id="id1"></span><h2>Примеры<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<p>Yargy заточен под работу с естественными текстами на русском языке, но
+основа библиотеки — обычный
+<a class="reference external" href="https://en.wikipedia.org/wiki/GLR_parser">GLR-парсер</a>. Ничего не
+мешает написать, например, парсер простых математических выражений:</p>
+<div class="code ipython3 highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">yargy</span> <span class="k">import</span> <span class="n">Parser</span><span class="p">,</span> <span class="n">rule</span><span class="p">,</span> <span class="n">or_</span><span class="p">,</span> <span class="n">forward</span>
+<span class="kn">from</span> <span class="nn">yargy.predicates</span> <span class="k">import</span> <span class="n">in_</span>
+
+
+<span class="n">SYMBOL</span> <span class="o">=</span> <span class="n">rule</span><span class="p">(</span>
+    <span class="n">in_</span><span class="p">(</span><span class="s1">&#39;AB&#39;</span><span class="p">)</span>
+<span class="p">)</span><span class="o">.</span><span class="n">named</span><span class="p">(</span><span class="s1">&#39;SYMBOL&#39;</span><span class="p">)</span>
+<span class="n">TERM</span> <span class="o">=</span> <span class="n">rule</span><span class="p">(</span>
+    <span class="n">SYMBOL</span><span class="p">,</span>
+    <span class="n">in_</span><span class="p">(</span><span class="s1">&#39;/*&#39;</span><span class="p">),</span>
+    <span class="n">SYMBOL</span>
+<span class="p">)</span><span class="o">.</span><span class="n">named</span><span class="p">(</span><span class="s1">&#39;TERM&#39;</span><span class="p">)</span>
+<span class="n">EXPR</span> <span class="o">=</span> <span class="n">forward</span><span class="p">()</span><span class="o">.</span><span class="n">named</span><span class="p">(</span><span class="s1">&#39;EXPR&#39;</span><span class="p">)</span>
+<span class="n">EXPR</span><span class="o">.</span><span class="n">define</span><span class="p">(</span><span class="n">or_</span><span class="p">(</span>
+    <span class="n">SYMBOL</span><span class="p">,</span>
+    <span class="n">TERM</span><span class="p">,</span>
+    <span class="n">rule</span><span class="p">(</span>
+        <span class="n">EXPR</span><span class="p">,</span>
+        <span class="n">in_</span><span class="p">(</span><span class="s1">&#39;+-&#39;</span><span class="p">),</span>
+        <span class="n">EXPR</span>
+    <span class="p">)</span>
+<span class="p">))</span>
+
+
+<span class="n">parser</span> <span class="o">=</span> <span class="n">Parser</span><span class="p">(</span><span class="n">EXPR</span><span class="p">)</span>
+<span class="n">match</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s1">&#39;A * A + B * B&#39;</span><span class="p">))</span>
+<span class="n">match</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">as_dot</span>
+</pre></div>
+</div>
+<img alt="_images/index_5_0.svg" src="_images/index_5_0.svg" /><p>Для работы с русским языком в Yargy встроен морфологический анализатор
+<a class="reference external" href="http://pymorphy2.readthedocs.io/en/latest/">Pymorphy2</a>. Можно,
+например, извлечь из текста топонимы, которые начинаются прилагательным
+и заканчиваются словами “федерация” или “республика”. Например,
+“Российская Федерация”, “Донецкая народная республика”:</p>
+<div class="code ipython3 highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">yargy</span> <span class="k">import</span> <span class="n">Parser</span><span class="p">,</span> <span class="n">rule</span><span class="p">,</span> <span class="n">and_</span>
+<span class="kn">from</span> <span class="nn">yargy.predicates</span> <span class="k">import</span> <span class="n">gram</span><span class="p">,</span> <span class="n">is_capitalized</span><span class="p">,</span> <span class="n">dictionary</span>
+
+
+<span class="n">GEO</span> <span class="o">=</span> <span class="n">rule</span><span class="p">(</span>
+    <span class="n">and_</span><span class="p">(</span>
+        <span class="n">gram</span><span class="p">(</span><span class="s1">&#39;ADJF&#39;</span><span class="p">),</span>  <span class="c1"># так помечается прилагательное, остальные пометки описаны в</span>
+                       <span class="c1"># http://pymorphy2.readthedocs.io/en/latest/user/grammemes.html</span>
+        <span class="n">is_capitalized</span><span class="p">()</span>
+    <span class="p">),</span>
+    <span class="n">gram</span><span class="p">(</span><span class="s1">&#39;ADJF&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">optional</span><span class="p">()</span><span class="o">.</span><span class="n">repeatable</span><span class="p">(),</span>
+    <span class="n">dictionary</span><span class="p">({</span>
+        <span class="s1">&#39;федерация&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;республика&#39;</span>
+    <span class="p">})</span>
+<span class="p">)</span>
+
+
+<span class="n">parser</span> <span class="o">=</span> <span class="n">Parser</span><span class="p">(</span><span class="n">GEO</span><span class="p">)</span>
+<span class="n">text</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">В Чеченской республике на день рождения ...</span>
+<span class="s1">Донецкая народная республика провозгласила ...</span>
+<span class="s1">Башня Федерация — одна из самых высоких ...</span>
+<span class="s1">&#39;&#39;&#39;</span>
+<span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">parser</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">([</span><span class="n">_</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">match</span><span class="o">.</span><span class="n">tokens</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="s1">&#39;Донецкая&#39;</span><span class="p">,</span> <span class="s1">&#39;народная&#39;</span><span class="p">,</span> <span class="s1">&#39;республика&#39;</span><span class="p">]</span>
+<span class="p">[</span><span class="s1">&#39;Чеченской&#39;</span><span class="p">,</span> <span class="s1">&#39;республике&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Настоящие сложные грамматики для топонимов собраны в репозитории
+<a class="reference external" href="https://github.com/bureaucratic-labs/natasha">Natasha</a></p>
+<p>Часто найти подстроку в тексте не достаточно, нужно разбить информацию
+на поля и нормализовать. Например, из предложения “12 марта по приказу
+президента Владимира Путина …”, извлекается не просто три слова
+“президента Владимира Путина”, а объект вида
+<code class="docutils literal"><span class="pre">Person(position='президент',</span> <span class="pre">Name(first='Владимир',</span> <span class="pre">last='Путин'))</span></code>.</p>
+<div class="code ipython3 highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">yargy</span> <span class="k">import</span> <span class="n">Parser</span><span class="p">,</span> <span class="n">fact</span>
+<span class="kn">from</span> <span class="nn">yargy.predicates</span> <span class="k">import</span> <span class="n">gram</span>
+<span class="kn">from</span> <span class="nn">yargy.pipelines</span> <span class="k">import</span> <span class="n">MorphPipeline</span>
+
+
+<span class="n">Person</span> <span class="o">=</span> <span class="n">fact</span><span class="p">(</span>
+    <span class="s1">&#39;Person&#39;</span><span class="p">,</span>
+    <span class="p">[</span><span class="s1">&#39;position&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">]</span>
+<span class="p">)</span>
+<span class="n">Name</span> <span class="o">=</span> <span class="n">fact</span><span class="p">(</span>
+    <span class="s1">&#39;Name&#39;</span><span class="p">,</span>
+    <span class="p">[</span><span class="s1">&#39;first&#39;</span><span class="p">,</span> <span class="s1">&#39;last&#39;</span><span class="p">]</span>
+<span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">PositionsPipeline</span><span class="p">(</span><span class="n">MorphPipeline</span><span class="p">):</span>
+    <span class="n">grammemes</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Position&#39;</span><span class="p">}</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;премьер министр&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;президент&#39;</span>
+    <span class="p">]</span>
+
+
+<span class="n">NAME</span> <span class="o">=</span> <span class="n">rule</span><span class="p">(</span>
+    <span class="n">gram</span><span class="p">(</span><span class="s1">&#39;Name&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">interpretation</span><span class="p">(</span>
+        <span class="n">Name</span><span class="o">.</span><span class="n">first</span><span class="o">.</span><span class="n">inflected</span><span class="p">()</span>
+    <span class="p">),</span>
+    <span class="n">gram</span><span class="p">(</span><span class="s1">&#39;Surn&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">interpretation</span><span class="p">(</span>
+        <span class="n">Name</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">inflected</span><span class="p">()</span>
+    <span class="p">)</span>
+<span class="p">)</span><span class="o">.</span><span class="n">interpretation</span><span class="p">(</span>
+    <span class="n">Name</span>
+<span class="p">)</span>
+<span class="n">PERSON</span> <span class="o">=</span> <span class="n">rule</span><span class="p">(</span>
+    <span class="n">gram</span><span class="p">(</span><span class="s1">&#39;Position&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">interpretation</span><span class="p">(</span>
+        <span class="n">Person</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">inflected</span><span class="p">()</span>
+    <span class="p">),</span>
+    <span class="n">NAME</span><span class="o">.</span><span class="n">interpretation</span><span class="p">(</span>
+        <span class="n">Person</span><span class="o">.</span><span class="n">name</span>
+    <span class="p">)</span>
+<span class="p">)</span><span class="o">.</span><span class="n">interpretation</span><span class="p">(</span>
+    <span class="n">Person</span>
+<span class="p">)</span>
+
+
+<span class="n">parser</span> <span class="o">=</span> <span class="n">Parser</span><span class="p">(</span><span class="n">PERSON</span><span class="p">,</span> <span class="n">pipelines</span><span class="o">=</span><span class="p">[</span><span class="n">PositionsPipeline</span><span class="p">()])</span>
+<span class="n">text</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">12 марта по приказу президента Владимира Путина ...</span>
+<span class="s1">&#39;&#39;&#39;</span>
+<span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">parser</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">fact</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Person</span><span class="p">(</span><span class="n">position</span><span class="o">=</span><span class="s1">&#39;президент&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">Name</span><span class="p">(</span><span class="n">first</span><span class="o">=</span><span class="s1">&#39;владимир&#39;</span><span class="p">,</span> <span class="n">last</span><span class="o">=</span><span class="s1">&#39;путин&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Полные грамматики для имён и должностей собраны в репозитории
+<a class="reference external" href="https://github.com/bureaucratic-labs/natasha">Natasha</a></p>
+</div>
+<div class="section" id="start">
+<span id="id2"></span><h2>Токенизатор<a class="headerlink" href="#start" title="Permalink to this headline">¶</a></h2>
+<p>Парсер работает не с текстом, а с последовательностью токенов.
+Встроенный в Yargy токенизатор, работает максимально просто и
+предсказуемо. Он не пытается объединять в один токен последовательности
+символов типа “Яндекс.Такси”, “3.1415”, “1 500 000$”, “<a class="reference external" href="http://vk.com">http://vk.com</a>”:</p>
+<div class="code ipython3 highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">yargy.tokenizer</span> <span class="k">import</span> <span class="n">Tokenizer</span>
+
+
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">Tokenizer</span><span class="p">()</span>
+<span class="n">text</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;Ростов-на-Дону</span>
+<span class="s1">Длительностью 18ч. 10мин.</span>
+<span class="s1">Яндекс.Такси</span>
+<span class="s1">π ≈ 3.1415</span>
+<span class="s1">1 500 000$</span>
+<span class="s1">http://vk.com</span>
+<span class="s1">&#39;&#39;&#39;</span>
+<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">([</span><span class="n">_</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">tokenizer</span><span class="p">(</span><span class="n">line</span><span class="p">)])</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="s1">&#39;Ростов-на-Дону&#39;</span><span class="p">]</span>
+<span class="p">[</span><span class="s1">&#39;Длительностью&#39;</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="s1">&#39;ч&#39;</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="s1">&#39;мин&#39;</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">]</span>
+<span class="p">[</span><span class="s1">&#39;Яндекс&#39;</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="s1">&#39;Такси&#39;</span><span class="p">]</span>
+<span class="p">[</span><span class="s1">&#39;π&#39;</span><span class="p">,</span> <span class="s1">&#39;≈&#39;</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1415</span><span class="p">]</span>
+<span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;$&#39;</span><span class="p">]</span>
+<span class="p">[</span><span class="s1">&#39;http&#39;</span><span class="p">,</span> <span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="s1">&#39;vk&#39;</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="s1">&#39;com&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Для каждого токена делается морфологический анализ, определяется набор
+граммем. Например, “NOUN, sing, femn” означает “существительное в
+единственном числе женского рода”. Вне контекста слово может иметь
+несколько вариантов разбора, например, “стали” может быть
+существительным (NOUN), как в “марки стали”, а может быть глаголом
+(VERB), как в “мы стали более лучше”:</p>
+<div class="code ipython3 highlight-default"><div class="highlight"><pre><span></span><span class="n">tokenizer</span> <span class="o">=</span> <span class="n">Tokenizer</span><span class="p">()</span>
+<span class="nb">list</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">(</span><span class="s1">&#39;марки стали&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">Token</span><span class="p">(</span><span class="s1">&#39;марки&#39;</span><span class="p">,</span>
+       <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+       <span class="p">[</span><span class="n">Form</span><span class="p">(</span><span class="s1">&#39;марка&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;NOUN&#39;</span><span class="p">,</span> <span class="s1">&#39;femn&#39;</span><span class="p">,</span> <span class="s1">&#39;gent&#39;</span><span class="p">,</span> <span class="s1">&#39;inan&#39;</span><span class="p">,</span> <span class="s1">&#39;sing&#39;</span><span class="p">}),</span>
+        <span class="n">Form</span><span class="p">(</span><span class="s1">&#39;марка&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;NOUN&#39;</span><span class="p">,</span> <span class="s1">&#39;femn&#39;</span><span class="p">,</span> <span class="s1">&#39;inan&#39;</span><span class="p">,</span> <span class="s1">&#39;nomn&#39;</span><span class="p">,</span> <span class="s1">&#39;plur&#39;</span><span class="p">}),</span>
+        <span class="n">Form</span><span class="p">(</span><span class="s1">&#39;марка&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;NOUN&#39;</span><span class="p">,</span> <span class="s1">&#39;accs&#39;</span><span class="p">,</span> <span class="s1">&#39;femn&#39;</span><span class="p">,</span> <span class="s1">&#39;inan&#39;</span><span class="p">,</span> <span class="s1">&#39;plur&#39;</span><span class="p">}),</span>
+        <span class="n">Form</span><span class="p">(</span><span class="s1">&#39;маркий&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;ADJS&#39;</span><span class="p">,</span> <span class="s1">&#39;Qual&#39;</span><span class="p">,</span> <span class="s1">&#39;plur&#39;</span><span class="p">}),</span>
+        <span class="n">Form</span><span class="p">(</span><span class="s1">&#39;марк&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;NOUN&#39;</span><span class="p">,</span> <span class="s1">&#39;Name&#39;</span><span class="p">,</span> <span class="s1">&#39;anim&#39;</span><span class="p">,</span> <span class="s1">&#39;masc&#39;</span><span class="p">,</span> <span class="s1">&#39;nomn&#39;</span><span class="p">,</span> <span class="s1">&#39;plur&#39;</span><span class="p">})]),</span>
+ <span class="n">Token</span><span class="p">(</span><span class="s1">&#39;стали&#39;</span><span class="p">,</span>
+       <span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">11</span><span class="p">),</span>
+       <span class="p">[</span><span class="n">Form</span><span class="p">(</span><span class="s1">&#39;стать&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;VERB&#39;</span><span class="p">,</span> <span class="s1">&#39;indc&#39;</span><span class="p">,</span> <span class="s1">&#39;intr&#39;</span><span class="p">,</span> <span class="s1">&#39;past&#39;</span><span class="p">,</span> <span class="s1">&#39;perf&#39;</span><span class="p">,</span> <span class="s1">&#39;plur&#39;</span><span class="p">}),</span>
+        <span class="n">Form</span><span class="p">(</span><span class="s1">&#39;сталь&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;NOUN&#39;</span><span class="p">,</span> <span class="s1">&#39;femn&#39;</span><span class="p">,</span> <span class="s1">&#39;gent&#39;</span><span class="p">,</span> <span class="s1">&#39;inan&#39;</span><span class="p">,</span> <span class="s1">&#39;sing&#39;</span><span class="p">}),</span>
+        <span class="n">Form</span><span class="p">(</span><span class="s1">&#39;сталь&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;NOUN&#39;</span><span class="p">,</span> <span class="s1">&#39;datv&#39;</span><span class="p">,</span> <span class="s1">&#39;femn&#39;</span><span class="p">,</span> <span class="s1">&#39;inan&#39;</span><span class="p">,</span> <span class="s1">&#39;sing&#39;</span><span class="p">}),</span>
+        <span class="n">Form</span><span class="p">(</span><span class="s1">&#39;сталь&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;NOUN&#39;</span><span class="p">,</span> <span class="s1">&#39;femn&#39;</span><span class="p">,</span> <span class="s1">&#39;inan&#39;</span><span class="p">,</span> <span class="s1">&#39;loct&#39;</span><span class="p">,</span> <span class="s1">&#39;sing&#39;</span><span class="p">}),</span>
+        <span class="n">Form</span><span class="p">(</span><span class="s1">&#39;сталь&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;NOUN&#39;</span><span class="p">,</span> <span class="s1">&#39;femn&#39;</span><span class="p">,</span> <span class="s1">&#39;inan&#39;</span><span class="p">,</span> <span class="s1">&#39;nomn&#39;</span><span class="p">,</span> <span class="s1">&#39;plur&#39;</span><span class="p">}),</span>
+        <span class="n">Form</span><span class="p">(</span><span class="s1">&#39;сталь&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;NOUN&#39;</span><span class="p">,</span> <span class="s1">&#39;accs&#39;</span><span class="p">,</span> <span class="s1">&#39;femn&#39;</span><span class="p">,</span> <span class="s1">&#39;inan&#39;</span><span class="p">,</span> <span class="s1">&#39;plur&#39;</span><span class="p">})])]</span>
+</pre></div>
+</div>
+<p>Токенизатор работает на регулярных выражениях. Пользователь может менять стандартные правила и добавлять новые. Как это сделать написано в <a class="reference internal" href="reference.html#tokenizer"><span class="std std-ref">справочнике</span></a>.</p>
+<p>В репозитории <a class="reference external" href="https://github.com/bureaucratic-labs/models">models</a>
+опубликованы натренированные модели и статистический токенизатор
+совместимый с Yargy. Такой токенизатор не будет бить на части слова типа
+“яндекс.музыка”, “mail.ru”. Важно помнить, что грамматики Natasha
+разрабатываются и тестируются для стандартного токенизатора с дефолтным
+набором правил.</p>
+</div>
+<div class="section" id="id3">
+<h2>Газеттир<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>Перед тем, как токены попадают в парсер их обрабатывает газеттир.
+Газеттир нужен, например, чтобы объединить несколько токенов в один
+мультитокен и добавить граммему в список граммем:</p>
+<div class="code ipython3 highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">yargy.pipelines</span> <span class="k">import</span> <span class="n">MorphPipeline</span>
+
+
+<span class="k">class</span> <span class="nc">Pipeline</span><span class="p">(</span><span class="n">MorphPipeline</span><span class="p">):</span>
+    <span class="n">grammemes</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Type&#39;</span><span class="p">}</span>
+
+    <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;dvd - диск&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;видео файл&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;видеофильм&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;газета&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;электронный дневник&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;эссе&#39;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">Tokenizer</span><span class="p">()</span>
+<span class="n">pipeline</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">()</span>
+<span class="n">text</span> <span class="o">=</span> <span class="s1">&#39;Видео файл на dvd-диске&#39;</span>
+<span class="nb">list</span><span class="p">(</span><span class="n">pipeline</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">(</span><span class="n">text</span><span class="p">)))</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">Multitoken</span><span class="p">(</span><span class="s1">&#39;Видео файл&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="p">[</span><span class="n">Form</span><span class="p">(</span><span class="s1">&#39;видео файл&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;Type&#39;</span><span class="p">})]),</span>
+ <span class="n">Token</span><span class="p">(</span><span class="s1">&#39;на&#39;</span><span class="p">,</span>
+       <span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">13</span><span class="p">),</span>
+       <span class="p">[</span><span class="n">Form</span><span class="p">(</span><span class="s1">&#39;на&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;PREP&#39;</span><span class="p">}),</span> <span class="n">Form</span><span class="p">(</span><span class="s1">&#39;на&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;PRCL&#39;</span><span class="p">}),</span> <span class="n">Form</span><span class="p">(</span><span class="s1">&#39;на&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;INTJ&#39;</span><span class="p">})]),</span>
+ <span class="n">Multitoken</span><span class="p">(</span><span class="s1">&#39;dvd-диске&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="mi">23</span><span class="p">),</span> <span class="p">[</span><span class="n">Form</span><span class="p">(</span><span class="s1">&#39;dvd - диск&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;Type&#39;</span><span class="p">})])]</span>
+</pre></div>
+</div>
+<p>Кроме <code class="docutils literal"><span class="pre">MorphPipeline</span></code> есть ещё <code class="docutils literal"><span class="pre">CaselessPipeline</span></code>, о нём написано в <a class="reference internal" href="reference.html#gazetter"><span class="std std-ref">справочнике</span></a>.</p>
+</div>
+<div class="section" id="id4">
+<h2>Предикаты<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<p>Предикат — функция, которая принимает на вход токен и возвращает <code class="docutils literal"><span class="pre">True</span></code> или <code class="docutils literal"><span class="pre">False</span></code>. В Yargy встроено много готовых предикатов. Полный список есть в <a class="reference internal" href="reference.html#predicate"><span class="std std-ref">справочнике</span></a>. Предикаты комбинируются с помощью <code class="docutils literal"><span class="pre">and_</span></code>, <code class="docutils literal"><span class="pre">or_</span></code> и <code class="docutils literal"><span class="pre">not_</span></code>.</p>
+<div class="code ipython3 highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">yargy</span> <span class="k">import</span> <span class="n">and_</span><span class="p">,</span> <span class="n">or_</span><span class="p">,</span> <span class="n">not_</span>
+<span class="kn">from</span> <span class="nn">yargy.predicates</span> <span class="k">import</span> <span class="n">gram</span><span class="p">,</span> <span class="n">is_capitalized</span>
+
+
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">Tokenizer</span><span class="p">()</span>
+<span class="n">token</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">(</span><span class="s1">&#39;Стали&#39;</span><span class="p">))</span>
+
+<span class="n">predicate</span> <span class="o">=</span> <span class="n">gram</span><span class="p">(</span><span class="s1">&#39;NOUN&#39;</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">predicate</span><span class="p">(</span><span class="n">token</span><span class="p">)</span> <span class="o">==</span> <span class="kc">True</span>
+
+<span class="n">predicate</span> <span class="o">=</span> <span class="n">gram</span><span class="p">(</span><span class="s1">&#39;VERB&#39;</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">predicate</span><span class="p">(</span><span class="n">token</span><span class="p">)</span> <span class="o">==</span> <span class="kc">True</span>
+
+<span class="n">predicate</span> <span class="o">=</span> <span class="n">and_</span><span class="p">(</span>
+    <span class="n">gram</span><span class="p">(</span><span class="s1">&#39;NOUN&#39;</span><span class="p">),</span>
+    <span class="n">not_</span><span class="p">(</span><span class="n">is_capitalized</span><span class="p">())</span>
+<span class="p">)</span>
+<span class="k">assert</span> <span class="n">predicate</span><span class="p">(</span><span class="n">token</span><span class="p">)</span> <span class="o">==</span> <span class="kc">False</span>
+</pre></div>
+</div>
+<p>Через <code class="xref py py-func docutils literal"><span class="pre">custom()</span></code> можно задать предикат с помощью произвольной функции. Например, такой предикат будет срабатывать на римских цифрах:</p>
+<div class="code ipython3 highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pymorphy2.shapes</span> <span class="k">import</span> <span class="n">is_roman_number</span>
+
+<span class="kn">from</span> <span class="nn">yargy.predicates</span> <span class="k">import</span> <span class="n">custom</span>
+
+
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">Tokenizer</span><span class="p">()</span>
+<span class="n">token</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">(</span><span class="s1">&#39;XL&#39;</span><span class="p">))</span>
+
+<span class="n">predicate</span> <span class="o">=</span> <span class="n">custom</span><span class="p">(</span><span class="n">is_roman_number</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">predicate</span><span class="p">(</span><span class="n">token</span><span class="p">)</span> <span class="o">==</span> <span class="kc">True</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id5">
+<h2>Грамматики<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<p>В Yargy используется специальный DSL для описания грамматик. Любую
+контекстно-свободную грамматику можно описать с помощью конструкций
+Питона. Например, есть примитивная грамматика для размеров одежды:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">KEY</span> <span class="o">-&gt;</span> <span class="n">р</span><span class="o">.</span> <span class="o">|</span> <span class="n">размер</span>
+<span class="n">VALUE</span> <span class="o">-&gt;</span> <span class="n">S</span> <span class="o">|</span> <span class="n">M</span> <span class="o">|</span> <span class="n">L</span>
+<span class="n">SIZE</span> <span class="o">-&gt;</span> <span class="n">KEY</span> <span class="n">VALUE</span>
+</pre></div>
+</div>
+<p>Вот так она будет выглядеть в Yargy:</p>
+<div class="code ipython3 highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">yargy</span> <span class="k">import</span> <span class="n">rule</span><span class="p">,</span> <span class="n">or_</span>
+
+
+<span class="n">KEY</span> <span class="o">=</span> <span class="n">or_</span><span class="p">(</span>
+    <span class="n">rule</span><span class="p">(</span><span class="s1">&#39;р&#39;</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">),</span>
+    <span class="n">rule</span><span class="p">(</span><span class="s1">&#39;размер&#39;</span><span class="p">)</span>
+<span class="p">)</span><span class="o">.</span><span class="n">named</span><span class="p">(</span><span class="s1">&#39;KEY&#39;</span><span class="p">)</span>
+<span class="n">VALUE</span> <span class="o">=</span> <span class="n">or_</span><span class="p">(</span>
+    <span class="n">rule</span><span class="p">(</span><span class="s1">&#39;S&#39;</span><span class="p">),</span>
+    <span class="n">rule</span><span class="p">(</span><span class="s1">&#39;M&#39;</span><span class="p">),</span>
+    <span class="n">rule</span><span class="p">(</span><span class="s1">&#39;L&#39;</span><span class="p">),</span>
+<span class="p">)</span><span class="o">.</span><span class="n">named</span><span class="p">(</span><span class="s1">&#39;VALUE&#39;</span><span class="p">)</span>
+<span class="n">SIZE</span> <span class="o">=</span> <span class="n">rule</span><span class="p">(</span>
+    <span class="n">KEY</span><span class="p">,</span>
+    <span class="n">VALUE</span>
+<span class="p">)</span><span class="o">.</span><span class="n">named</span><span class="p">(</span><span class="s1">&#39;SIZE&#39;</span><span class="p">)</span>
+<span class="n">SIZE</span><span class="o">.</span><span class="n">normalized</span><span class="o">.</span><span class="n">as_bnf</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">SIZE</span> <span class="o">-&gt;</span> <span class="n">KEY</span> <span class="n">VALUE</span>
+<span class="n">KEY</span> <span class="o">-&gt;</span> <span class="s1">&#39;р&#39;</span> <span class="s1">&#39;.&#39;</span> <span class="o">|</span> <span class="s1">&#39;размер&#39;</span>
+<span class="n">VALUE</span> <span class="o">-&gt;</span> <span class="s1">&#39;S&#39;</span> <span class="o">|</span> <span class="s1">&#39;M&#39;</span> <span class="o">|</span> <span class="s1">&#39;L&#39;</span>
+</pre></div>
+</div>
+<p>Терминалом может быть не константа, а предикат. Например, правило для
+<code class="docutils literal"><span class="pre">VALUE</span></code> лучше записать так:</p>
+<div class="code ipython3 highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">yargy.predicates</span> <span class="k">import</span> <span class="n">in_</span>
+
+
+<span class="n">VALUE</span> <span class="o">=</span> <span class="n">rule</span><span class="p">(</span>
+    <span class="n">in_</span><span class="p">({</span><span class="s1">&#39;S&#39;</span><span class="p">,</span> <span class="s1">&#39;M&#39;</span><span class="p">,</span> <span class="s1">&#39;L&#39;</span><span class="p">})</span>
+<span class="p">)</span><span class="o">.</span><span class="n">named</span><span class="p">(</span><span class="s1">&#39;VALUE&#39;</span><span class="p">)</span>
+<span class="n">SIZE</span> <span class="o">=</span> <span class="n">rule</span><span class="p">(</span>
+    <span class="n">KEY</span><span class="p">,</span>
+    <span class="n">VALUE</span>
+<span class="p">)</span><span class="o">.</span><span class="n">named</span><span class="p">(</span><span class="s1">&#39;SIZE&#39;</span><span class="p">)</span>
+<span class="n">SIZE</span><span class="o">.</span><span class="n">normalized</span><span class="o">.</span><span class="n">as_bnf</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">SIZE</span> <span class="o">-&gt;</span> <span class="n">KEY</span> <span class="n">VALUE</span>
+<span class="n">KEY</span> <span class="o">-&gt;</span> <span class="s1">&#39;р&#39;</span> <span class="s1">&#39;.&#39;</span> <span class="o">|</span> <span class="s1">&#39;размер&#39;</span>
+<span class="n">VALUE</span> <span class="o">-&gt;</span> <span class="n">in_</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Как быть, когда правая часть правила ссылается на левую? Например, так:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">EXPR</span> <span class="o">-&gt;</span> <span class="n">a</span> <span class="o">|</span> <span class="p">(</span> <span class="n">EXPR</span> <span class="o">+</span> <span class="n">EXPR</span> <span class="p">)</span>
+</pre></div>
+</div>
+<p>В Питоне нельзя использовать, переменные, которые ещё не объявлены. Для
+создания рекурсивных правил, в DSL есть специальная конструкция
+<code class="docutils literal"><span class="pre">forward</span></code>:</p>
+<div class="code ipython3 highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">yargy</span> <span class="k">import</span> <span class="n">forward</span>
+
+
+<span class="n">EXPR</span> <span class="o">=</span> <span class="n">forward</span><span class="p">()</span><span class="o">.</span><span class="n">named</span><span class="p">(</span><span class="s1">&#39;EXPR&#39;</span><span class="p">)</span>
+<span class="n">EXPR</span><span class="o">.</span><span class="n">define</span><span class="p">(</span><span class="n">or_</span><span class="p">(</span>
+    <span class="n">rule</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">),</span>
+    <span class="n">rule</span><span class="p">(</span><span class="s1">&#39;(&#39;</span><span class="p">,</span> <span class="n">EXPR</span><span class="p">,</span> <span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">EXPR</span><span class="p">,</span> <span class="s1">&#39;)&#39;</span><span class="p">)</span>
+<span class="p">))</span>
+<span class="n">EXPR</span><span class="o">.</span><span class="n">normalized</span><span class="o">.</span><span class="n">as_bnf</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">EXPR</span> <span class="o">-&gt;</span> <span class="s1">&#39;a&#39;</span> <span class="o">|</span> <span class="s1">&#39;(&#39;</span> <span class="n">EXPR</span> <span class="s1">&#39;+&#39;</span> <span class="n">EXPR</span> <span class="s1">&#39;)&#39;</span>
+</pre></div>
+</div>
+<p>Рекурсивные правила позволяют описывать последовательности токенов
+произвольной длины. Так, например, выглядит грамматика для текста в
+кавычках:</p>
+<div class="code ipython3 highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">yargy</span> <span class="k">import</span> <span class="n">not_</span>
+<span class="kn">from</span> <span class="nn">yargy.predicates</span> <span class="k">import</span> <span class="n">eq</span>
+
+
+<span class="n">WORD</span> <span class="o">=</span> <span class="n">not_</span><span class="p">(</span><span class="n">eq</span><span class="p">(</span><span class="s1">&#39;»&#39;</span><span class="p">))</span>
+<span class="n">TEXT</span> <span class="o">=</span> <span class="n">forward</span><span class="p">()</span>
+<span class="n">TEXT</span><span class="o">.</span><span class="n">define</span><span class="p">(</span><span class="n">or_</span><span class="p">(</span>
+    <span class="n">rule</span><span class="p">(</span><span class="n">WORD</span><span class="p">),</span>
+    <span class="n">rule</span><span class="p">(</span><span class="n">WORD</span><span class="p">,</span> <span class="n">TEXT</span><span class="p">)</span>
+<span class="p">))</span>
+<span class="n">TITLE</span> <span class="o">=</span> <span class="n">rule</span><span class="p">(</span>
+    <span class="s1">&#39;«&#39;</span><span class="p">,</span>
+    <span class="n">TEXT</span><span class="p">,</span>
+    <span class="s1">&#39;»&#39;</span>
+<span class="p">)</span><span class="o">.</span><span class="n">named</span><span class="p">(</span><span class="s1">&#39;TITLE&#39;</span><span class="p">)</span>
+<span class="n">TITLE</span><span class="o">.</span><span class="n">normalized</span><span class="o">.</span><span class="n">as_bnf</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">TITLE</span> <span class="o">-&gt;</span> <span class="s1">&#39;«&#39;</span> <span class="n">R0</span> <span class="s1">&#39;»&#39;</span>
+<span class="n">R0</span> <span class="o">-&gt;</span> <span class="n">not_</span><span class="p">(</span><span class="s1">&#39;»&#39;</span><span class="p">)</span> <span class="o">|</span> <span class="n">not_</span><span class="p">(</span><span class="s1">&#39;»&#39;</span><span class="p">)</span> <span class="n">R0</span>
+</pre></div>
+</div>
+<p>Для удобства в Yargy то же самое можно записать короче:</p>
+<div class="code ipython3 highlight-default"><div class="highlight"><pre><span></span><span class="n">TITLE</span> <span class="o">=</span> <span class="n">rule</span><span class="p">(</span>
+    <span class="s1">&#39;«&#39;</span><span class="p">,</span>
+    <span class="n">not_</span><span class="p">(</span><span class="n">eq</span><span class="p">(</span><span class="s1">&#39;»&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">repeatable</span><span class="p">(),</span>
+    <span class="s1">&#39;»&#39;</span>
+<span class="p">)</span><span class="o">.</span><span class="n">named</span><span class="p">(</span><span class="s1">&#39;TITLE&#39;</span><span class="p">)</span>
+<span class="n">TITLE</span><span class="o">.</span><span class="n">as_bnf</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">TITLE</span> <span class="o">-&gt;</span> <span class="s1">&#39;«&#39;</span> <span class="n">R0</span> <span class="s1">&#39;»&#39;</span>
+<span class="n">R0</span> <span class="o">-&gt;</span> <span class="n">not_</span><span class="p">(</span><span class="s1">&#39;»&#39;</span><span class="p">)</span> <span class="o">+</span>
+</pre></div>
+</div>
+<p>Библиотека автоматически приводит грамматику к простому виду:</p>
+<div class="code ipython3 highlight-default"><div class="highlight"><pre><span></span><span class="n">TITLE</span><span class="o">.</span><span class="n">normalized</span><span class="o">.</span><span class="n">as_bnf</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">TITLE</span> <span class="o">-&gt;</span> <span class="s1">&#39;«&#39;</span> <span class="n">R0</span> <span class="s1">&#39;»&#39;</span>
+<span class="n">R0</span> <span class="o">-&gt;</span> <span class="n">not_</span><span class="p">(</span><span class="s1">&#39;»&#39;</span><span class="p">)</span> <span class="o">|</span> <span class="n">not_</span><span class="p">(</span><span class="s1">&#39;»&#39;</span><span class="p">)</span> <span class="n">R0</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id6">
+<h2>Парсер<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<p>По аналогии с модулем <code class="docutils literal"><span class="pre">re</span></code> у парсера есть два медота: <code class="docutils literal"><span class="pre">findall</span></code> и
+<code class="docutils literal"><span class="pre">match</span></code>. <code class="docutils literal"><span class="pre">findall</span></code> находит все непересекающиеся подстроки в тексте,
+которые удовлетворяют грамматике:</p>
+<div class="code ipython3 highlight-default"><div class="highlight"><pre><span></span><span class="n">parser</span> <span class="o">=</span> <span class="n">Parser</span><span class="p">(</span>
+    <span class="n">or_</span><span class="p">(</span>
+        <span class="n">PERSON</span><span class="p">,</span>
+        <span class="n">TITLE</span>
+    <span class="p">),</span>
+    <span class="n">pipelines</span><span class="o">=</span><span class="p">[</span><span class="n">PositionsPipeline</span><span class="p">()]</span>
+<span class="p">)</span>
+<span class="n">text</span> <span class="o">=</span> <span class="s1">&#39;Президент Владимир Путин в фильме «Интервью с Путиным» ..&#39;</span>
+<span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">parser</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">([</span><span class="n">_</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">match</span><span class="o">.</span><span class="n">tokens</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="s1">&#39;«&#39;</span><span class="p">,</span> <span class="s1">&#39;Интервью&#39;</span><span class="p">,</span> <span class="s1">&#39;с&#39;</span><span class="p">,</span> <span class="s1">&#39;Путиным&#39;</span><span class="p">,</span> <span class="s1">&#39;»&#39;</span><span class="p">]</span>
+<span class="p">[</span><span class="s1">&#39;Президент&#39;</span><span class="p">,</span> <span class="s1">&#39;Владимир&#39;</span><span class="p">,</span> <span class="s1">&#39;Путин&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p><code class="docutils literal"><span class="pre">match</span></code> — пытается разобрать весь текст целиком:</p>
+<div class="code ipython3 highlight-default"><div class="highlight"><pre><span></span><span class="n">parser</span> <span class="o">=</span> <span class="n">Parser</span><span class="p">(</span><span class="n">EXPR</span><span class="p">)</span>
+<span class="n">match</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s1">&#39;(a + ((a + a) + a))&#39;</span><span class="p">))</span>
+<span class="n">match</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">as_dot</span>
+</pre></div>
+</div>
+<img alt="_images/index_46_0.svg" src="_images/index_46_0.svg" /></div>
+<div class="section" id="id7">
+<h2>Интерпретация<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
+<p>Результат работы парсера — это дерево разбора. Например, так выглядит
+грамматика и деревья разбора для дат:</p>
+<div class="code ipython3 highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">IPython.display</span> <span class="k">import</span> <span class="n">display</span>
+
+<span class="kn">from</span> <span class="nn">yargy.predicates</span> <span class="k">import</span> <span class="p">(</span>
+    <span class="n">lte</span><span class="p">,</span>
+    <span class="n">gte</span><span class="p">,</span>
+    <span class="n">dictionary</span>
+<span class="p">)</span>
+
+
+<span class="n">MONTHS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;январь&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;февраль&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;март&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;апрель&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;мая&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;июнь&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;июль&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;август&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;сентябрь&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;октябрь&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;ноябрь&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;декабрь&#39;</span>
+<span class="p">}</span>
+
+
+<span class="n">MONTH_NAME</span> <span class="o">=</span> <span class="n">dictionary</span><span class="p">(</span><span class="n">MONTHS</span><span class="p">)</span>
+<span class="n">MONTH</span> <span class="o">=</span> <span class="n">and_</span><span class="p">(</span>
+    <span class="n">gte</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+    <span class="n">lte</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="n">DAY</span> <span class="o">=</span> <span class="n">and_</span><span class="p">(</span>
+    <span class="n">gte</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+    <span class="n">lte</span><span class="p">(</span><span class="mi">31</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="n">YEAR</span> <span class="o">=</span> <span class="n">and_</span><span class="p">(</span>
+    <span class="n">gte</span><span class="p">(</span><span class="mi">1900</span><span class="p">),</span>
+    <span class="n">lte</span><span class="p">(</span><span class="mi">2100</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="n">DATE</span> <span class="o">=</span> <span class="n">or_</span><span class="p">(</span>
+    <span class="n">rule</span><span class="p">(</span><span class="n">DAY</span><span class="p">,</span> <span class="n">MONTH_NAME</span><span class="p">,</span> <span class="n">YEAR</span><span class="p">),</span>
+    <span class="n">rule</span><span class="p">(</span><span class="n">YEAR</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="n">MONTH</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="n">DAY</span><span class="p">),</span>
+    <span class="n">rule</span><span class="p">(</span><span class="n">YEAR</span><span class="p">,</span> <span class="s1">&#39;г&#39;</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">)</span>
+<span class="p">)</span><span class="o">.</span><span class="n">named</span><span class="p">(</span><span class="s1">&#39;DATE&#39;</span><span class="p">)</span>
+<span class="n">parser</span> <span class="o">=</span> <span class="n">Parser</span><span class="p">(</span><span class="n">DATE</span><span class="p">)</span>
+<span class="n">text</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;2015г.</span>
+<span class="s1">18 июля 2016</span>
+<span class="s1">2016-01-02</span>
+<span class="s1">&#39;&#39;&#39;</span>
+<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">))</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">as_dot</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="_images/index_49_0.svg" src="_images/index_49_0.svg" /><img alt="_images/index_49_1.svg" src="_images/index_49_1.svg" /><img alt="_images/index_49_2.svg" src="_images/index_49_2.svg" /><p>Интерпретация — процесс преобразования дерева разбора в объект с набором
+полей. Для дат, например, нужно получить структуры вида
+<code class="docutils literal"><span class="pre">Date(year=2016,</span> <span class="pre">month=1,</span> <span class="pre">day=2)</span></code>. Пользователь размечает дерево на
+вершины-атрибуты и вершины-конструкторы с помощью метода
+<code class="docutils literal"><span class="pre">interpretation</span></code>:</p>
+<div class="code ipython3 highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">yargy</span> <span class="k">import</span> <span class="n">fact</span>
+
+
+<span class="n">Date</span> <span class="o">=</span> <span class="n">fact</span><span class="p">(</span>
+    <span class="s1">&#39;Date&#39;</span><span class="p">,</span>
+    <span class="p">[</span><span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;month&#39;</span><span class="p">,</span> <span class="s1">&#39;day&#39;</span><span class="p">]</span>
+<span class="p">)</span>
+
+
+<span class="n">DATE</span> <span class="o">=</span> <span class="n">or_</span><span class="p">(</span>
+    <span class="n">rule</span><span class="p">(</span>
+        <span class="n">DAY</span><span class="o">.</span><span class="n">interpretation</span><span class="p">(</span>
+            <span class="n">Date</span><span class="o">.</span><span class="n">day</span>
+        <span class="p">),</span>
+        <span class="n">MONTH_NAME</span><span class="o">.</span><span class="n">interpretation</span><span class="p">(</span>
+            <span class="n">Date</span><span class="o">.</span><span class="n">month</span>
+        <span class="p">),</span>
+        <span class="n">YEAR</span><span class="o">.</span><span class="n">interpretation</span><span class="p">(</span>
+            <span class="n">Date</span><span class="o">.</span><span class="n">year</span>
+        <span class="p">)</span>
+    <span class="p">),</span>
+    <span class="n">rule</span><span class="p">(</span>
+        <span class="n">YEAR</span><span class="o">.</span><span class="n">interpretation</span><span class="p">(</span>
+            <span class="n">Date</span><span class="o">.</span><span class="n">year</span>
+        <span class="p">),</span>
+        <span class="s1">&#39;-&#39;</span><span class="p">,</span>
+        <span class="n">MONTH</span><span class="o">.</span><span class="n">interpretation</span><span class="p">(</span>
+            <span class="n">Date</span><span class="o">.</span><span class="n">month</span>
+        <span class="p">),</span>
+        <span class="s1">&#39;-&#39;</span><span class="p">,</span>
+        <span class="n">DAY</span><span class="o">.</span><span class="n">interpretation</span><span class="p">(</span>
+            <span class="n">Date</span><span class="o">.</span><span class="n">day</span>
+        <span class="p">)</span>
+    <span class="p">),</span>
+    <span class="n">rule</span><span class="p">(</span>
+        <span class="n">YEAR</span><span class="o">.</span><span class="n">interpretation</span><span class="p">(</span>
+            <span class="n">Date</span><span class="o">.</span><span class="n">year</span>
+        <span class="p">),</span>
+        <span class="s1">&#39;г&#39;</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span>
+    <span class="p">)</span>
+<span class="p">)</span><span class="o">.</span><span class="n">interpretation</span><span class="p">(</span>
+    <span class="n">Date</span>
+<span class="p">)</span><span class="o">.</span><span class="n">named</span><span class="p">(</span><span class="s1">&#39;DATE&#39;</span><span class="p">)</span>
+
+<span class="n">parser</span> <span class="o">=</span> <span class="n">Parser</span><span class="p">(</span><span class="n">DATE</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">))</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">as_dot</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="_images/index_51_0.svg" src="_images/index_51_0.svg" /><img alt="_images/index_51_1.svg" src="_images/index_51_1.svg" /><img alt="_images/index_51_2.svg" src="_images/index_51_2.svg" /><p>На основании разметки библиотека собирает объекты:</p>
+<div class="code ipython3 highlight-default"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">))</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">fact</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Date</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="mi">2015</span><span class="p">,</span>
+     <span class="n">month</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+     <span class="n">day</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Date</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="mi">2016</span><span class="p">,</span>
+     <span class="n">month</span><span class="o">=</span><span class="s1">&#39;июля&#39;</span><span class="p">,</span>
+     <span class="n">day</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Date</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="mi">2016</span><span class="p">,</span>
+     <span class="n">month</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+     <span class="n">day</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Подробнее о процессе интерпретации написано в <a class="reference internal" href="reference.html#interpretation"><span class="std std-ref">справочнике</span></a>.</p>
+</div>
+<div class="section" id="id8">
+<h2>Нормализация<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h2>
+<p>Содержание полей фактов нужно нормировать. Например, не
+<code class="docutils literal"><span class="pre">Date('июня',</span> <span class="pre">18)</span></code>, а <code class="docutils literal"><span class="pre">Date('июнь',</span> <span class="pre">18)</span></code>; не
+<code class="docutils literal"><span class="pre">Person('президента',</span> <span class="pre">Name('Владимира',</span> <span class="pre">'Путина'))</span></code>, а
+<code class="docutils literal"><span class="pre">Person('президент',</span> <span class="pre">Name('Владимир',</span> <span class="pre">'Путин'))</span></code>. В Yargy пользователь
+при разметке дерева разбора указывает как просклонять содержание
+вершины-атрибута с помощью метода <code class="docutils literal"><span class="pre">inflected</span></code>:</p>
+<div class="code ipython3 highlight-default"><div class="highlight"><pre><span></span><span class="n">DATE</span> <span class="o">=</span> <span class="n">rule</span><span class="p">(</span>
+    <span class="n">DAY</span><span class="o">.</span><span class="n">interpretation</span><span class="p">(</span>
+        <span class="n">Date</span><span class="o">.</span><span class="n">day</span>
+    <span class="p">),</span>
+    <span class="n">MONTH_NAME</span><span class="o">.</span><span class="n">interpretation</span><span class="p">(</span>
+        <span class="n">Date</span><span class="o">.</span><span class="n">month</span><span class="o">.</span><span class="n">inflected</span><span class="p">()</span>
+    <span class="p">),</span>
+    <span class="n">YEAR</span><span class="o">.</span><span class="n">interpretation</span><span class="p">(</span>
+        <span class="n">Date</span><span class="o">.</span><span class="n">year</span>
+    <span class="p">)</span>
+<span class="p">)</span><span class="o">.</span><span class="n">interpretation</span><span class="p">(</span>
+    <span class="n">Date</span>
+<span class="p">)</span>
+
+<span class="n">parser</span> <span class="o">=</span> <span class="n">Parser</span><span class="p">(</span><span class="n">DATE</span><span class="p">)</span>
+<span class="n">match</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s1">&#39;18 июня 2016&#39;</span><span class="p">))</span>
+<span class="n">match</span><span class="o">.</span><span class="n">fact</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Date</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="mi">2016</span><span class="p">,</span>
+     <span class="n">month</span><span class="o">=</span><span class="s1">&#39;июнь&#39;</span><span class="p">,</span>
+     <span class="n">day</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Подробнее про нормализацию написано в <a class="reference internal" href="reference.html#normalization"><span class="std std-ref">справочнике</span></a>.</p>
+</div>
+<div class="section" id="id9">
+<h2>Согласование<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
+<p>Пускай есть примитивная грамматика для извлечения имён:</p>
+<div class="code ipython3 highlight-default"><div class="highlight"><pre><span></span><span class="n">NAME</span> <span class="o">=</span> <span class="n">rule</span><span class="p">(</span>
+    <span class="n">gram</span><span class="p">(</span><span class="s1">&#39;Name&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">interpretation</span><span class="p">(</span>
+        <span class="n">Name</span><span class="o">.</span><span class="n">first</span><span class="o">.</span><span class="n">inflected</span><span class="p">()</span>
+    <span class="p">),</span>
+    <span class="n">gram</span><span class="p">(</span><span class="s1">&#39;Surn&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">interpretation</span><span class="p">(</span>
+        <span class="n">Name</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">inflected</span><span class="p">()</span>
+    <span class="p">)</span>
+<span class="p">)</span><span class="o">.</span><span class="n">interpretation</span><span class="p">(</span>
+    <span class="n">Name</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>У неё есть две проблемы. Она срабатывает на словосочетаниях, где имя и
+фамилия в разных падежах:</p>
+<div class="code ipython3 highlight-default"><div class="highlight"><pre><span></span><span class="n">parser</span> <span class="o">=</span> <span class="n">Parser</span><span class="p">(</span><span class="n">NAME</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">parser</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;Илье Ивановым, Павлом Семенов&#39;</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">([</span><span class="n">_</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">match</span><span class="o">.</span><span class="n">tokens</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="s1">&#39;Илье&#39;</span><span class="p">,</span> <span class="s1">&#39;Ивановым&#39;</span><span class="p">]</span>
+<span class="p">[</span><span class="s1">&#39;Павлом&#39;</span><span class="p">,</span> <span class="s1">&#39;Семенов&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Имя и фамилия приводятся к нормальной форме независимо, поэтому,
+например, фамилия “Иванову” всегда будет мужского рода:</p>
+<div class="code ipython3 highlight-default"><div class="highlight"><pre><span></span><span class="n">parser</span> <span class="o">=</span> <span class="n">Parser</span><span class="p">(</span><span class="n">NAME</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">parser</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;Сашу Иванову, Саше Иванову&#39;</span><span class="p">):</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">fact</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Name</span><span class="p">(</span><span class="n">first</span><span class="o">=</span><span class="s1">&#39;саша&#39;</span><span class="p">,</span>
+     <span class="n">last</span><span class="o">=</span><span class="s1">&#39;иванов&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Name</span><span class="p">(</span><span class="n">first</span><span class="o">=</span><span class="s1">&#39;саше&#39;</span><span class="p">,</span>
+     <span class="n">last</span><span class="o">=</span><span class="s1">&#39;иванов&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>В Yargy связь между токенами устанавливается методом <code class="docutils literal"><span class="pre">match</span></code>. Например, для согласования по числу в <code class="docutils literal"><span class="pre">match</span></code> передаётся <code class="xref py py-class docutils literal"><span class="pre">number_relation</span></code>, для согласования по падежу, роду и числу — <code class="xref py py-class docutils literal"><span class="pre">gnc_relation</span></code>:</p>
+<div class="code ipython3 highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">yargy.relations</span> <span class="k">import</span> <span class="n">gnc_relation</span>
+
+
+<span class="n">gnc</span> <span class="o">=</span> <span class="n">gnc_relation</span><span class="p">()</span>
+
+<span class="n">NAME</span> <span class="o">=</span> <span class="n">rule</span><span class="p">(</span>
+    <span class="n">gram</span><span class="p">(</span><span class="s1">&#39;Name&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">gnc</span><span class="p">)</span><span class="o">.</span><span class="n">interpretation</span><span class="p">(</span>
+        <span class="n">Name</span><span class="o">.</span><span class="n">first</span><span class="o">.</span><span class="n">inflected</span><span class="p">()</span>
+    <span class="p">),</span>
+    <span class="n">gram</span><span class="p">(</span><span class="s1">&#39;Surn&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">gnc</span><span class="p">)</span><span class="o">.</span><span class="n">interpretation</span><span class="p">(</span>
+        <span class="n">Name</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">inflected</span><span class="p">()</span>
+    <span class="p">)</span>
+<span class="p">)</span><span class="o">.</span><span class="n">interpretation</span><span class="p">(</span>
+    <span class="n">Name</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="code ipython3 highlight-default"><div class="highlight"><pre><span></span><span class="n">parser</span> <span class="o">=</span> <span class="n">Parser</span><span class="p">(</span><span class="n">NAME</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">parser</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;Илье Ивановым, Павлом Семенов, Саша Быков&#39;</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">([</span><span class="n">_</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">match</span><span class="o">.</span><span class="n">tokens</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="s1">&#39;Саша&#39;</span><span class="p">,</span> <span class="s1">&#39;Быков&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="code ipython3 highlight-default"><div class="highlight"><pre><span></span><span class="n">parser</span> <span class="o">=</span> <span class="n">Parser</span><span class="p">(</span><span class="n">NAME</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">parser</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;Сашу Иванову, Саше Иванову&#39;</span><span class="p">):</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">fact</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Name</span><span class="p">(</span><span class="n">first</span><span class="o">=</span><span class="s1">&#39;саша&#39;</span><span class="p">,</span>
+     <span class="n">last</span><span class="o">=</span><span class="s1">&#39;иванова&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Name</span><span class="p">(</span><span class="n">first</span><span class="o">=</span><span class="s1">&#39;саша&#39;</span><span class="p">,</span>
+     <span class="n">last</span><span class="o">=</span><span class="s1">&#39;иванов&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Полный список типов согласований есть в <a class="reference internal" href="reference.html#relation"><span class="std std-ref">справочнике</span></a>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Yargy</a><ul>
+<li><a class="reference internal" href="#examples">Примеры</a></li>
+<li><a class="reference internal" href="#start">Токенизатор</a></li>
+<li><a class="reference internal" href="#id3">Газеттир</a></li>
+<li><a class="reference internal" href="#id4">Предикаты</a></li>
+<li><a class="reference internal" href="#id5">Грамматики</a></li>
+<li><a class="reference internal" href="#id6">Парсер</a></li>
+<li><a class="reference internal" href="#id7">Интерпретация</a></li>
+<li><a class="reference internal" href="#id8">Нормализация</a></li>
+<li><a class="reference internal" href="#id9">Согласование</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
